@@ -1,0 +1,24 @@
+{
+  "name": "audio-sculptor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JS-Hao/audio-sculptor.git"
+  },
+  "keywords": [
+    "audio",
+    "edit",
+    "worker"
+  ],
+  "author": "jshao",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JS-Hao/audio-sculptor/issues"
+  },
+  "homepage": "https://github.com/JS-Hao/audio-sculptor#readme"
+}
