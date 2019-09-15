@@ -26,12 +26,12 @@ export default class Sdk implements ISdk {
     this.worker.terminate();
   };
 
-  async splice(
+  splice = async (
     originBlob: Blob,
     startSecond: number,
     endSecond: number,
     insertBlob?: Blob,
-  ): Promise<Blob> {
+  ): Promise<Blob> => {
     const st = startSecond;
     const et = endSecond;
     const originAb = await blobToArrayBuffer(originBlob);
@@ -55,7 +55,7 @@ export default class Sdk implements ISdk {
       ),
     );
     return audioBufferToBlob(combindResult.data.data[0].data);
-  }
+  };
 
   clip = async (
     originBlob: Blob,
