@@ -1,0 +1,22 @@
+{
+  "name": "auido-sculptor-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/js/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack-dev-server --disableHostCheck=true --progress --colors --hot --inline",
+    "build": "webpack --progress --colors"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@babel/core": "^7.4.4",
+    "@babel/preset-env": "^7.4.4",
+    "babel-loader": "^8.0.6",
+    "lodash": "^4.17.11",
+    "webpack": "^4.31.0",
+    "webpack-cli": "^3.3.2",
+    "webpack-dev-server": "^3.3.1"
+  },
+  "devDependencies": {}
+}

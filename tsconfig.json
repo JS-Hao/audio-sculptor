@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "ESNext",
+    "jsx": "preserve",
+    "importHelpers": true,
+    "moduleResolution": "node",
+    "declaration": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "outDir": "./build",
+    "paths": {
+      "@capsule/enow-player": ["packages/enow-player/src/index.ts"],
+      "@capsule/enow-recorder": ["packages/enow-recorder/src/index.ts"],
+      "@capsule/iframe-sdk": ["packages/iframe-sdk/src/index.ts"],
+      "@capsule/player": ["packages/player/src/index.ts"],
+      "@capsule/utils": ["packages/utils/src/index.ts"],
+      "@capsule/rec": ["packages/rec/src/index.ts"],
+      "@capsule/components": ["packages/components/src/index.ts"],
+      "@capsule/upload": ["packages/upload/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules"],
+  "include": ["packages/*/src/**/*.ts"]
+}

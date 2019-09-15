@@ -1,24 +1,25 @@
 {
   "name": "audio-sculptor",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "0.0.1",
+  "description": "you can edit audio(such as clip, splice and replace) in browsers😊",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/JS-Hao/audio-sculptor.git"
+    "build": "babel src --out-dir dist --extensions .ts",
+    "watch": "yarn link && rimraf ./dist && babel --watch src --out-dir dist --copy-files --extensions .ts"
   },
   "keywords": [
-    "audio",
-    "edit",
-    "worker"
+    "recorder"
   ],
-  "author": "jshao",
+  "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/JS-Hao/audio-sculptor/issues"
-  },
-  "homepage": "https://github.com/JS-Hao/audio-sculptor#readme"
+  "devDependencies": {
+    "typescript": "^3.4.5",
+    "@babel/cli": "^7.4.4",
+    "@babel/core": "^7.4.4",
+    "@babel/plugin-proposal-class-properties": "^7.4.4",
+    "@babel/plugin-transform-runtime": "^7.4.4",
+    "@babel/preset-env": "^7.4.4",
+    "@babel/preset-typescript": "^7.3.3",
+    "@babel/runtime": "^7.4.4"
+  }
 }
