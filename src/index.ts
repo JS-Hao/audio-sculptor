@@ -1,5 +1,4 @@
 import { ISdk } from './types';
-import { workerPath } from './constant';
 import {
   createWorker,
   createTimeoutPromise,
@@ -14,7 +13,11 @@ import {
 export default class Sdk implements ISdk {
   private worker: Worker;
 
-  open = (onSuccess?: Function, onFail?: Function): Promise<any> => {
+  open = (
+    workerPath: string,
+    onSuccess?: Function,
+    onFail?: Function,
+  ): Promise<any> => {
     const worker = createWorker(workerPath);
     const p1 = waitForWorkerIsReady(worker, onSuccess, onFail);
     const p2 = createTimeoutPromise(30 * 1000);
@@ -44,8 +47,8 @@ export default class Sdk implements ISdk {
       getClipCommand(originAb, et),
     );
 
-    const leftSideAb = leftSideResult.data.data[0].data;
-    const rightSideAb = rightSideResult.data.data[0].data;
+    const leftSideAb = leftSideResult.data.data.MEMFS[0].data;
+    const rightSideAb = rightSideResult.data.data.MEMFS[0].data;
     const combindResult = await pmToPromise(
       this.worker,
       await getCombineCommand(
@@ -54,7 +57,7 @@ export default class Sdk implements ISdk {
           : [leftSideAb, rightSideAb],
       ),
     );
-    return audioBufferToBlob(combindResult.data.data[0].data);
+    return audioBufferToBlob(combindResult.data.data.MEMFS[0].data);
   };
 
   clip = async (
@@ -69,6 +72,8 @@ export default class Sdk implements ISdk {
       this.worker,
       getClipCommand(originAb, st, et),
     );
-    return audioBufferToBlob(result.data.data[0].data);
+    console.log('result', result);
+
+    return audioBufferToBlob(result.data.data.MEMFS[0].data);
   };
 }

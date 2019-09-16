@@ -4,7 +4,7 @@ import AudioSculptor from 'audio-sculptor';
 const r = new Recorder({});
 const a = new AudioSculptor();
 
-const p = a.open();
+const p = a.open('http://localhost:9000/static/ffmpeg-worker-mp4.js');
 
 r.open(() => {
   r.start();
@@ -22,6 +22,13 @@ r.open(() => {
                   const audio = new Audio(url);
                   audio.controls = true;
                   document.body.appendChild(audio);
+
+                  a.clip(blob, 1, 3).then(b => {
+                    const url = URL.createObjectURL(b);
+                    const audio = new Audio(url);
+                    audio.controls = true;
+                    document.body.appendChild(audio);
+                  });
                 });
               });
             },
@@ -29,6 +36,14 @@ r.open(() => {
           );
         }, 2000);
       }, 1000);
+      // p.then(() => {
+      //   a.clip(blob1, 1, 2).then(blob => {
+      //     const url = URL.createObjectURL(blob);
+      //     const audio = new Audio(url);
+      //     audio.controls = true;
+      //     document.body.appendChild(audio);
+      //   });
+      // });
     });
-  }, 5000);
+  }, 3000);
 });

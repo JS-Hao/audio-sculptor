@@ -1,21 +1,22 @@
 import { PostInfo, WorkerEvent } from './types';
 
 export function createWorker(workerPath: string) {
-  const blob = URL.createObjectURL(
-    new Blob(
-      [
-        'importScripts("' +
-          workerPath +
-          '");var now = Date.now;function print(text) {postMessage({"type" : "stdout","data" : text});};onmessage = function(event) {var message = event.data;if (message.type === "command") {var Module = {print: print,printErr: print,files: message.files || [],arguments: message.arguments || [],TOTAL_MEMORY: message.TOTAL_MEMORY || false};postMessage({"type" : "start","data" : Module.arguments.join(" ")});postMessage({"type" : "stdout","data" : "Received command: " +Module.arguments.join(" ") +((Module.TOTAL_MEMORY) ? ".  Processing with " + Module.TOTAL_MEMORY + " bits." : "")});var time = now();var result = ffmpeg_run(Module);var totalTime = now() - time;postMessage({"type" : "stdout","data" : "Finished processing (took " + totalTime + "ms)"});postMessage({"type" : "done","data" : result,"time" : totalTime});}};postMessage({"type" : "ready"});',
-      ],
-      {
-        type: 'application/javascript',
-      },
-    ),
-  );
+  // const blob = URL.createObjectURL(
+  //   new Blob(
+  //     [
+  //       'importScripts("' +
+  //         workerPath +
+  //         '");var now = Date.now;function print(text) {postMessage({"type" : "stdout","data" : text});};onmessage = function(event) {var message = event.data;if (message.type === "command") {var Module = {print: print,printErr: print,files: message.files || [],arguments: message.arguments || [],TOTAL_MEMORY: message.TOTAL_MEMORY || false};postMessage({"type" : "start","data" : Module.arguments.join(" ")});postMessage({"type" : "stdout","data" : "Received command: " +Module.arguments.join(" ") +((Module.TOTAL_MEMORY) ? ".  Processing with " + Module.TOTAL_MEMORY + " bits." : "")});var time = now();var result = ffmpeg_run(Module);var totalTime = now() - time;postMessage({"type" : "stdout","data" : "Finished processing (took " + totalTime + "ms)"});postMessage({"type" : "done","data" : result,"time" : totalTime});}};postMessage({"type" : "ready"});',
+  //     ],
+  //     {
+  //       type: 'application/javascript',
+  //     },
+  //   ),
+  // );
 
-  const worker = new Worker(blob);
-  URL.revokeObjectURL(blob);
+  // const worker = new Worker(blob);
+  // URL.revokeObjectURL(blob);
+  const worker = new Worker(workerPath);
   return worker;
 }
 
@@ -100,11 +101,11 @@ export function getClipCommand(
   et?: number,
 ) {
   return {
-    type: 'command',
+    type: 'run',
     arguments: `-ss ${st} -i input.mp3 ${
       et ? `-t ${et} ` : ''
     }-acodec copy output.mp3`.split(' '),
-    files: [
+    MEMFS: [
       {
         data: new Uint8Array(arrayBuffer as any),
         name: 'input.mp3',
@@ -126,9 +127,9 @@ export async function getCombineCommand(audioBuffers: ArrayBuffer[]) {
     name: 'filelist.txt',
   });
   return {
-    type: 'command',
+    type: 'run',
     arguments: `-f concat -i filelist.txt -c copy output.mp3`.split(' '),
-    files,
+    MEMFS: files,
   };
 }
 

@@ -6,7 +6,11 @@ export interface WorkerEvent {
 }
 
 export interface ISdk {
-  open(onSuccess?: Function, onFail?: Function): Promise<any>;
+  open(
+    workerPath: string,
+    onSuccess?: Function,
+    onFail?: Function,
+  ): Promise<any>;
 
   close(): void;
 
@@ -23,5 +27,5 @@ export interface ISdk {
 export interface PostInfo {
   type: string;
   arguments: string[];
-  files: any[];
+  MEMFS: any[];
 }
