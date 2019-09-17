@@ -1,7 +1,9 @@
 export interface WorkerEvent {
   data: {
     type: string;
-    data: any;
+    data: {
+      MEMFS: { data: ArrayBuffer }[];
+    };
   };
 }
 

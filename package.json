@@ -1,6 +1,6 @@
 {
   "name": "audio-sculptor",
-  "version": "2.0.1-0",
+  "version": "1.0.1-0",
   "description": "you can edit audio(such as clip, splice and replace) in browsers😊",
   "main": "dist/index.js",
   "scripts": {
@@ -14,13 +14,17 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "typescript": "^3.4.5",
     "@babel/cli": "^7.4.4",
     "@babel/core": "^7.4.4",
     "@babel/plugin-proposal-class-properties": "^7.4.4",
     "@babel/plugin-transform-runtime": "^7.4.4",
     "@babel/preset-env": "^7.4.4",
     "@babel/preset-typescript": "^7.3.3",
-    "@babel/runtime": "^7.4.4"
+    "@babel/runtime": "^7.4.4",
+    "typescript": "^3.4.5"
+  },
+  "dependencies": {
+    "@types/lodash": "^4.14.138",
+    "lodash": "^4.17.15"
   }
 }
