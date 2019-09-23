@@ -93,7 +93,7 @@ export default class Sdk implements ISdk {
   clip = async (
     originBlob: Blob,
     startSecond: number,
-    endSecond: number,
+    endSecond?: number,
   ): Promise<Blob> => {
     const ss = startSecond;
     const d = isNumber(endSecond) ? endSecond - startSecond : this.end;

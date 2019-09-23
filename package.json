@@ -9,9 +9,16 @@
     "prepublish": "npm run build"
   },
   "keywords": [
-    "recorder"
+    "recorder",
+    "audio",
+    "edit",
+    "clip",
+    "webRTC",
+    "ffmpeg",
+    "splice",
+    "mp3"
   ],
-  "author": "",
+  "author": "JS-Hao",
   "license": "ISC",
   "devDependencies": {
     "@babel/cli": "^7.4.4",
