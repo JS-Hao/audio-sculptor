@@ -8,6 +8,7 @@ import {
   getCombineCommand,
   getClipCommand,
   audioBufferToBlob,
+  blobToAudio,
 } from './utils';
 import { isNumber } from 'lodash';
 
@@ -128,4 +129,12 @@ export default class Sdk implements ISdk {
     );
     return audioBufferToBlob(result.data.data.MEMFS[0].data);
   };
+
+  toBlob(audio: HTMLAudioElement): Promise<Blob> {
+    throw new Error('Method not implemented.');
+  }
+
+  toAudio(blob: Blob): Promise<HTMLAudioElement> {
+    return Promise.resolve(blobToAudio(blob));
+  }
 }

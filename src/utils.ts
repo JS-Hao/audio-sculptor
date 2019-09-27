@@ -140,6 +140,11 @@ export function audioBufferToBlob(arrayBuffer: any) {
   return file;
 }
 
+export function blobToAudio(blob: Blob): HTMLAudioElement {
+  const url = URL.createObjectURL(blob);
+  return new Audio(url);
+}
+
 function toTwoDigits(time: number | string): string {
   const timeStr = time.toString();
   return parseInt(timeStr) <= 9 ? `0${timeStr}` : timeStr;

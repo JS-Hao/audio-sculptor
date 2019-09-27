@@ -24,6 +24,10 @@ export interface ISdk {
   ): Promise<Blob>;
 
   clip(originBlob: Blob, startSecond: number, endSecond: number): Promise<Blob>;
+
+  toBlob(audio: HTMLAudioElement): Promise<Blob>;
+
+  toAudio(blob: Blob): Promise<HTMLAudioElement>;
 }
 
 export interface PostInfo {
