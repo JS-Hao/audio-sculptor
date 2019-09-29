@@ -9,6 +9,7 @@ import {
   getClipCommand,
   audioBufferToBlob,
   blobToAudio,
+  audioToBlob,
 } from './utils';
 import { isNumber } from 'lodash';
 
@@ -131,10 +132,10 @@ export default class Sdk implements ISdk {
   };
 
   toBlob(audio: HTMLAudioElement): Promise<Blob> {
-    throw new Error('Method not implemented.');
+    return audioToBlob(audio);
   }
 
   toAudio(blob: Blob): Promise<HTMLAudioElement> {
-    return Promise.resolve(blobToAudio(blob));
+    return blobToAudio(blob);
   }
 }

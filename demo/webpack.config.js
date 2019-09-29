@@ -24,7 +24,7 @@ module.exports = {
 
     proxy: {
       '/static': {
-        target: 'https://169.254.20.62:3001',
+        target: 'http://172.18.134.43:8000',
         changeOrigin: true,
         secure: false,
         pathRewrite: { '^/static': '' },

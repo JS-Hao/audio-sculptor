@@ -1,4 +1,5 @@
 import { PostInfo, WorkerEvent } from './types';
+import axios from 'axios';
 
 export function createWorker(workerPath: string) {
   // const blob = URL.createObjectURL(
@@ -140,12 +141,27 @@ export function audioBufferToBlob(arrayBuffer: any) {
   return file;
 }
 
-export function blobToAudio(blob: Blob): HTMLAudioElement {
+export function blobToAudio(blob: Blob): Promise<HTMLAudioElement> {
   const url = URL.createObjectURL(blob);
-  return new Audio(url);
+  return Promise.resolve(new Audio(url));
 }
 
-function toTwoDigits(time: number | string): string {
-  const timeStr = time.toString();
-  return parseInt(timeStr) <= 9 ? `0${timeStr}` : timeStr;
+export async function audioToBlob(audio: HTMLAudioElement): Promise<Blob> {
+  const url = audio.src;
+  if (url) {
+    return axios({
+      url,
+      method: 'get',
+      responseType: 'arraybuffer',
+    }).then(res => {
+      const arrayBuffer = res.data;
+      const contentType = res.headers['content-type'];
+      const file = new File([arrayBuffer], 'result', {
+        type: contentType,
+      });
+      return file;
+    });
+  } else {
+    return Promise.resolve(null);
+  }
 }
