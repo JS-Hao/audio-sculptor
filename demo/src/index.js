@@ -1,21 +1,25 @@
 import './recorder';
 import AudioSculptor from 'audio-sculptor';
 
-const r = new Recorder({});
-const a = new AudioSculptor();
+main();
 
-const p = a.open('http://localhost:9000/static/ffmpeg-worker-mp4.js');
+async function main() {
+  const audioSculptor = new AudioSculptor();
 
-r.open(async () => {
-  r.start();
-  const url = 'http://thisUrlIsFake.useYourSelf.mp3';
-  const audio = new Audio(url);
+  // 启动audioSculptor
+  const p = await audioSculptor.open('/static/ffmpeg-worker-mp4.js');
 
-  await p;
-  const blob = await a.toBlob(audio);
-  const clippedBlob = await a.clip(blob, 0, 3.058);
-  const clippedAudio = await a.toAudio(clippedBlob);
-  window.clippedAudio = clippedAudio;
+  // 创建一个音频
+  const audio = document.querySelector('audio');
+
+  const blob = await audioSculptor.toBlob(audio);
+
+  // 裁剪第5至10秒
+  const clippedBlob = await audioSculptor.clip(blob, 5, 10);
+  const clippedAudio = await audioSculptor.toAudio(clippedBlob);
+
+  const span = document.querySelector('.span');
+  span.innerText = '处理后的音频: ';
   clippedAudio.controls = true;
   document.body.appendChild(clippedAudio);
-});
+}

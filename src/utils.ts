@@ -153,12 +153,14 @@ export async function audioToBlob(audio: HTMLAudioElement): Promise<Blob> {
       url,
       method: 'get',
       responseType: 'arraybuffer',
-    }).then(res => {
+    }).then(async res => {
       const arrayBuffer = res.data;
       const contentType = res.headers['content-type'];
       const file = new File([arrayBuffer], 'result', {
         type: contentType,
       });
+      const arrbuf = await blobToArrayBuffer(file);
+
       return file;
     });
   } else {

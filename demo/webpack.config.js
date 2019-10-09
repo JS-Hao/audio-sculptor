@@ -21,14 +21,5 @@ module.exports = {
     contentBase: path.join(__dirname, 'src'),
     compress: true,
     port: 9000,
-
-    proxy: {
-      '/static': {
-        target: 'http://172.18.134.43:8000',
-        changeOrigin: true,
-        secure: false,
-        pathRewrite: { '^/static': '' },
-      },
-    },
   },
 };
