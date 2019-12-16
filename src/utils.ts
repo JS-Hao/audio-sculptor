@@ -141,7 +141,7 @@ export function audioBufferToBlob(arrayBuffer: any) {
   return file;
 }
 
-export function blobToAudio(blob: Blob): Promise<HTMLAudioElement> {
+export async function blobToAudio(blob: Blob): Promise<HTMLAudioElement> {
   const url = URL.createObjectURL(blob);
   return Promise.resolve(new Audio(url));
 }
@@ -159,11 +159,16 @@ export async function audioToBlob(audio: HTMLAudioElement): Promise<Blob> {
       const file = new File([arrayBuffer], 'result', {
         type: contentType,
       });
-      const arrbuf = await blobToArrayBuffer(file);
 
       return file;
     });
   } else {
     return Promise.resolve(null);
   }
+}
+
+export function timeout(time: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => reject(new Error('timeout in audioSculptor!')), time);
+  });
 }

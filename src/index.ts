@@ -10,12 +10,14 @@ import {
   audioBufferToBlob,
   blobToAudio,
   audioToBlob,
+  timeout,
 } from './utils';
 import { isNumber } from 'lodash';
 
 export default class Sdk implements ISdk {
   private worker: Worker;
   private end: string = 'end';
+  private timeoutNum: number = 30 * 1000;
 
   open = (
     workerPath: string,
@@ -33,7 +35,7 @@ export default class Sdk implements ISdk {
     this.worker.terminate();
   };
 
-  splice = async (
+  private innerSplice = async (
     originBlob: Blob,
     startSecond: number,
     endSecond?: number,
@@ -57,26 +59,22 @@ export default class Sdk implements ISdk {
       return null;
     } else if (ss === 0) {
       // 从头开始裁剪
-      rightSideArrBuf = (await pmToPromise(
-        this.worker,
-        getClipCommand(originAb, es as number),
-      )).data.data.MEMFS[0].data;
+      rightSideArrBuf = (
+        await pmToPromise(this.worker, getClipCommand(originAb, es as number))
+      ).data.data.MEMFS[0].data;
     } else if (ss !== 0 && es === this.end) {
       // 裁剪至尾部
-      leftSideArrBuf = (await pmToPromise(
-        this.worker,
-        getClipCommand(originAb, 0, ss),
-      )).data.data.MEMFS[0].data;
+      leftSideArrBuf = (
+        await pmToPromise(this.worker, getClipCommand(originAb, 0, ss))
+      ).data.data.MEMFS[0].data;
     } else {
       // 局部裁剪
-      leftSideArrBuf = (await pmToPromise(
-        this.worker,
-        getClipCommand(originAb, 0, ss),
-      )).data.data.MEMFS[0].data;
-      rightSideArrBuf = (await pmToPromise(
-        this.worker,
-        getClipCommand(originAb, es as number),
-      )).data.data.MEMFS[0].data;
+      leftSideArrBuf = (
+        await pmToPromise(this.worker, getClipCommand(originAb, 0, ss))
+      ).data.data.MEMFS[0].data;
+      rightSideArrBuf = (
+        await pmToPromise(this.worker, getClipCommand(originAb, es as number))
+      ).data.data.MEMFS[0].data;
     }
 
     const arrBufs = [];
@@ -92,7 +90,19 @@ export default class Sdk implements ISdk {
     return audioBufferToBlob(combindResult.data.data.MEMFS[0].data);
   };
 
-  clip = async (
+  splice = async (
+    originBlob: Blob,
+    startSecond: number,
+    endSecond?: number,
+    insertBlob?: Blob,
+  ): Promise<Blob> => {
+    return Promise.race([
+      this.innerSplice(originBlob, startSecond, endSecond, insertBlob),
+      timeout(this.timeoutNum) as any,
+    ]);
+  };
+
+  private innerClip = async (
     originBlob: Blob,
     startSecond: number,
     endSecond?: number,
@@ -103,21 +113,33 @@ export default class Sdk implements ISdk {
     let resultArrBuf: ArrayBuffer;
 
     if (d === this.end) {
-      resultArrBuf = (await pmToPromise(
-        this.worker,
-        getClipCommand(originAb, ss),
-      )).data.data.MEMFS[0].data;
+      resultArrBuf = (
+        await pmToPromise(this.worker, getClipCommand(originAb, ss))
+      ).data.data.MEMFS[0].data;
     } else {
-      resultArrBuf = (await pmToPromise(
-        this.worker,
-        getClipCommand(originAb, ss, d as number),
-      )).data.data.MEMFS[0].data;
+      resultArrBuf = (
+        await pmToPromise(
+          this.worker,
+          getClipCommand(originAb, ss, d as number),
+        )
+      ).data.data.MEMFS[0].data;
     }
 
     return audioBufferToBlob(resultArrBuf);
   };
 
-  concat = async (blobs: Blob[]) => {
+  clip = async (
+    originBlob: Blob,
+    startSecond: number,
+    endSecond?: number,
+  ): Promise<Blob> => {
+    return Promise.race([
+      this.innerClip(originBlob, startSecond, endSecond),
+      timeout(this.timeoutNum) as any,
+    ]);
+  };
+
+  private innerConcat = async (blobs: Blob[]) => {
     const arrBufs: ArrayBuffer[] = [];
 
     for (let i = 0; i < blobs.length; i++) {
@@ -129,6 +151,10 @@ export default class Sdk implements ISdk {
       await getCombineCommand(arrBufs),
     );
     return audioBufferToBlob(result.data.data.MEMFS[0].data);
+  };
+
+  concat = async (blobs: Blob[]) => {
+    return Promise.race([this.innerConcat(blobs), timeout(this.timeoutNum)]);
   };
 
   toBlob(audio: HTMLAudioElement): Promise<Blob> {
