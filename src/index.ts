@@ -1,4 +1,4 @@
-import { ISdk } from './types';
+import { ISdk, SdkConfig } from './types';
 import {
   createWorker,
   createTimeoutPromise,
@@ -17,7 +17,12 @@ import { isNumber } from 'lodash';
 export default class Sdk implements ISdk {
   private worker: Worker;
   private end: string = 'end';
-  private timeoutNum: number = 30 * 1000;
+  private timeoutNum: number;
+
+  constructor(conf?: SdkConfig) {
+    const { timeout = 30 * 1000 } = conf || {};
+    this.timeoutNum = timeout;
+  }
 
   open = (
     workerPath: string,

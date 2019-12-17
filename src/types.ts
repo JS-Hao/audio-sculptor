@@ -7,6 +7,10 @@ export interface WorkerEvent {
   };
 }
 
+export interface SdkConfig {
+  timeout?: number;
+}
+
 export interface ISdk {
   open(
     workerPath: string,
