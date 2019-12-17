@@ -25,6 +25,23 @@ import AudioSculptor from 'audio-sculptor';
 const audioSculptor = new AudioSculptor();
 ```
 
+
+
+### new AudioSculptor([options])
+
+* options
+  * timeout: 音频处理的超时时间，默认为30s
+
+初始化`audio-sculptor`，通过传入`options`配置项，可配置一些基本内容
+
+```javascript
+const audioSculptor = new AudioSculptor({
+    timeout: 20 * 1000, // 将超时设置为20s
+})
+```
+
+
+
 `audio-sculptor`所操作的对象都是`Blob`而不是`Audio`，因此提供了以下静态方法进行相互转换:
 
 ### audioSculptor.toBlob(audio)
