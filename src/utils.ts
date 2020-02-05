@@ -1,4 +1,4 @@
-import { PostInfo, WorkerEvent } from './types';
+import { PostInfo, WorkerEvent, MediaType } from './types';
 import axios from 'axios';
 
 export function createWorker(workerPath: string) {
@@ -101,24 +101,42 @@ export function getClipCommand(
   st: number,
   et?: number,
 ) {
+  const type = getMediaType();
   return {
     type: 'run',
-    arguments: `-ss ${st} -i input.mp3 ${
+    arguments: `-ss ${st} -i input.${type} ${
       et ? `-t ${et} ` : ''
-    }-acodec copy output.mp3`.split(' '),
+    }-acodec copy output.${type}`.split(' '),
     MEMFS: [
       {
         data: new Uint8Array(arrayBuffer as any),
-        name: 'input.mp3',
+        name: `input.${type}`,
+      },
+    ],
+  };
+}
+
+export function getTransformSelfCommand(arrayBuffer: ArrayBuffer) {
+  const type = getMediaType();
+  return {
+    type: 'run',
+    arguments: `-i input.${type} -vcodec copy -acodec copy output.${type}`.split(
+      ' ',
+    ),
+    MEMFS: [
+      {
+        data: new Uint8Array(arrayBuffer as any),
+        name: `input.${type}`,
       },
     ],
   };
 }
 
 export async function getCombineCommand(audioBuffers: ArrayBuffer[]) {
+  const type = getMediaType();
   const files = audioBuffers.map((arrayBuffer, index) => ({
     data: new Uint8Array(arrayBuffer as any),
-    name: `input${index}.mp3`,
+    name: `input${index}.${type}`,
   }));
   const txtContent = [files.map(f => `file '${f.name}'`).join('\n')];
   const txtBlob = new Blob(txtContent, { type: 'text/txt' });
@@ -129,14 +147,15 @@ export async function getCombineCommand(audioBuffers: ArrayBuffer[]) {
   });
   return {
     type: 'run',
-    arguments: `-f concat -i filelist.txt -c copy output.mp3`.split(' '),
+    arguments: `-f concat -i filelist.txt -c copy output.${type}`.split(' '),
     MEMFS: files,
   };
 }
 
 export function audioBufferToBlob(arrayBuffer: any) {
-  const file = new File([arrayBuffer], 'test.mp3', {
-    type: 'audio/mp3',
+  const type = getMediaType();
+  const file = new File([arrayBuffer], `test.${type}`, {
+    type: `audio/${type}`,
   });
   return file;
 }
@@ -171,4 +190,13 @@ export function timeout(time: number): Promise<void> {
   return new Promise((resolve, reject) => {
     setTimeout(() => reject(new Error('timeout in audioSculptor!')), time);
   });
+}
+
+let mediaType: MediaType;
+export function setMediaType(type: MediaType) {
+  mediaType = type;
+}
+
+export function getMediaType(): MediaType {
+  return mediaType;
 }

@@ -11,12 +11,18 @@ export interface SdkConfig {
   timeout?: number;
 }
 
+export enum MediaType {
+  mp3 = 'mp3',
+  webm = 'webm',
+}
+
 export interface ISdk {
-  open(
-    workerPath: string,
-    onSuccess?: Function,
-    onFail?: Function,
-  ): Promise<any>;
+  open(conf: {
+    workerPath: string;
+    mediaType: MediaType;
+    onSuccess?: Function;
+    onFail?: Function;
+  }): Promise<any>;
 
   close(): void;
 
@@ -26,6 +32,8 @@ export interface ISdk {
     endSecond: number,
     insertBlob?: Blob,
   ): Promise<Blob>;
+
+  transformSelf(originBlob: Blob): Promise<Blob>;
 
   clip(originBlob: Blob, startSecond: number, endSecond: number): Promise<Blob>;
 

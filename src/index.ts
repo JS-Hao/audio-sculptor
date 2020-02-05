@@ -1,4 +1,4 @@
-import { ISdk, SdkConfig } from './types';
+import { ISdk, SdkConfig, MediaType } from './types';
 import {
   createWorker,
   createTimeoutPromise,
@@ -11,8 +11,10 @@ import {
   blobToAudio,
   audioToBlob,
   timeout,
+  setMediaType,
+  getTransformSelfCommand,
 } from './utils';
-import { isNumber } from 'lodash';
+import { isNumber, get as getIn } from 'lodash';
 
 export default class Sdk implements ISdk {
   private worker: Worker;
@@ -20,15 +22,18 @@ export default class Sdk implements ISdk {
   private timeoutNum: number;
 
   constructor(conf?: SdkConfig) {
-    const { timeout = 30 * 1000 } = conf || {};
-    this.timeoutNum = timeout;
+    conf = conf || {};
+    this.timeoutNum = conf.timeout || 30 * 1000;
   }
 
-  open = (
-    workerPath: string,
-    onSuccess?: Function,
-    onFail?: Function,
-  ): Promise<any> => {
+  open = (conf: {
+    workerPath: string;
+    mediaType: MediaType;
+    onSuccess?: Function;
+    onFail?: Function;
+  }): Promise<any> => {
+    const { workerPath, mediaType, onSuccess, onFail } = conf;
+    setMediaType(mediaType);
     const worker = createWorker(workerPath);
     const p1 = waitForWorkerIsReady(worker, onSuccess, onFail);
     const p2 = createTimeoutPromise(30 * 1000);
@@ -107,6 +112,35 @@ export default class Sdk implements ISdk {
     ]);
   };
 
+  innerTransformSelf = async (originBlob: Blob): Promise<Blob> => {
+    const originAb = await blobToArrayBuffer(originBlob);
+    const result = await pmToPromise(
+      this.worker,
+      getTransformSelfCommand(originAb),
+    );
+    const resultArrBuf = getIn(result, 'data.data.MEMFS.0.data', null);
+
+    return audioBufferToBlob(resultArrBuf);
+  };
+
+  transformSelf = async (originBlob: Blob): Promise<Blob> => {
+    return Promise.race([
+      this.innerTransformSelf(originBlob),
+      timeout(this.timeoutNum) as any,
+    ]);
+  };
+
+  clip = async (
+    originBlob: Blob,
+    startSecond: number,
+    endSecond?: number,
+  ): Promise<Blob> => {
+    return Promise.race([
+      this.innerClip(originBlob, startSecond, endSecond),
+      timeout(this.timeoutNum) as any,
+    ]);
+  };
+
   private innerClip = async (
     originBlob: Blob,
     startSecond: number,
@@ -131,17 +165,6 @@ export default class Sdk implements ISdk {
     }
 
     return audioBufferToBlob(resultArrBuf);
-  };
-
-  clip = async (
-    originBlob: Blob,
-    startSecond: number,
-    endSecond?: number,
-  ): Promise<Blob> => {
-    return Promise.race([
-      this.innerClip(originBlob, startSecond, endSecond),
-      timeout(this.timeoutNum) as any,
-    ]);
   };
 
   private innerConcat = async (blobs: Blob[]) => {
