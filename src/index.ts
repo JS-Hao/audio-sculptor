@@ -13,6 +13,7 @@ import {
   timeout,
   setMediaType,
   getTransformSelfCommand,
+  getConvertCommand,
 } from './utils';
 import { isNumber, get as getIn } from 'lodash';
 
@@ -110,6 +111,30 @@ export default class Sdk implements ISdk {
       this.innerSplice(originBlob, startSecond, endSecond, insertBlob),
       timeout(this.timeoutNum) as any,
     ]);
+  };
+
+  convert = async (
+    originBlob: Blob,
+    targetType: MediaType,
+    timeoutValue?: number,
+  ): Promise<Blob> => {
+    return Promise.race([
+      this.innerConvert(originBlob, targetType),
+      timeout(timeoutValue || this.timeoutNum) as any,
+    ]);
+  };
+
+  innerConvert = async (
+    originBlob: Blob,
+    originType: MediaType,
+  ): Promise<Blob> => {
+    const originAb = await blobToArrayBuffer(originBlob);
+    const result = await pmToPromise(
+      this.worker,
+      getConvertCommand(originAb, originType),
+    );
+    const resultArrBuf = getIn(result, 'data.data.MEMFS.0.data', null);
+    return audioBufferToBlob(resultArrBuf);
   };
 
   innerTransformSelf = async (originBlob: Blob): Promise<Blob> => {

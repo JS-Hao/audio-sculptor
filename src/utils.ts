@@ -132,6 +132,25 @@ export function getTransformSelfCommand(arrayBuffer: ArrayBuffer) {
   };
 }
 
+export function getConvertCommand(
+  arrayBuffer: ArrayBuffer,
+  originType: MediaType,
+) {
+  const type = getMediaType();
+  return {
+    type: 'run',
+    arguments: `-i input.${originType} -vn -ab 128k -ar 44100 -y output.${type}`.split(
+      ' ',
+    ),
+    MEMFS: [
+      {
+        data: new Uint8Array(arrayBuffer as any),
+        name: `input.${originType}`,
+      },
+    ],
+  };
+}
+
 export async function getCombineCommand(audioBuffers: ArrayBuffer[]) {
   const type = getMediaType();
   const files = audioBuffers.map((arrayBuffer, index) => ({
