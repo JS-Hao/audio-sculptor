@@ -44,6 +44,7 @@ export default class Sdk implements ISdk {
 
   close = () => {
     this.worker.terminate();
+    this.worker = null;
   };
 
   private innerSplice = async (
