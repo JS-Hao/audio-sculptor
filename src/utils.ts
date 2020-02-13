@@ -1,5 +1,6 @@
 import { PostInfo, WorkerEvent, MediaType } from './types';
 import axios from 'axios';
+import { get } from 'lodash';
 
 export function createWorker(workerPath: string) {
   // const blob = URL.createObjectURL(
@@ -30,11 +31,20 @@ export function createTimeoutPromise(time: number): Promise<void> {
 }
 
 export function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     const fileReader = new FileReader();
+
     fileReader.onload = function() {
       resolve(fileReader.result as ArrayBuffer);
     };
+
+    fileReader.onerror = function(evt) {
+      const err1 = get(evt, 'target.error.code', 'NO CODE');
+      const err2 = get(fileReader, 'error.code', 'NO CODE');
+
+      reject(`fileReader read blob error: ${err1} or ${err2}`);
+    };
+
     fileReader.readAsArrayBuffer(blob);
   });
 }
@@ -57,6 +67,11 @@ export function pmToPromise(
         case 'done':
           worker.removeEventListener('message', successHandler);
           resolve(event);
+          break;
+
+        case 'error':
+          worker.removeEventListener('message', successHandler);
+          reject(event.data.data);
           break;
 
         default:
