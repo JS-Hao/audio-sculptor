@@ -154,9 +154,7 @@ export function getConvertCommand(
   const type = getMediaType();
   return {
     type: 'run',
-    arguments: `-i input.${originType} -vn -ab 32k -ar 16000 -y output.${type}`.split(
-      ' ',
-    ),
+    arguments: `-i input.${originType} -vn -y output.${type}`.split(' '),
     MEMFS: [
       {
         data: new Uint8Array(arrayBuffer as any),
