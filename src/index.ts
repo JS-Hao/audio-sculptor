@@ -122,7 +122,7 @@ export default class Sdk implements ISdk {
     progressCallback?: (num: number) => void,
   ): Promise<Blob> => {
     return Promise.race([
-      this.innerConvert(originBlob, targetType),
+      this.innerConvert(originBlob, targetType, progressCallback),
       timeout(timeoutValue || this.timeoutNum) as any,
     ]);
   };
