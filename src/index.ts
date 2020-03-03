@@ -14,6 +14,7 @@ import {
   setMediaType,
   getTransformSelfCommand,
   getConvertCommand,
+  pmToPromiseWithProgress,
 } from './utils';
 import { isNumber, get as getIn } from 'lodash';
 
@@ -118,6 +119,7 @@ export default class Sdk implements ISdk {
     originBlob: Blob,
     targetType: MediaType,
     timeoutValue?: number,
+    progressCallback?: (num: number) => void,
   ): Promise<Blob> => {
     return Promise.race([
       this.innerConvert(originBlob, targetType),
@@ -128,11 +130,13 @@ export default class Sdk implements ISdk {
   innerConvert = async (
     originBlob: Blob,
     originType: MediaType,
+    progressCallback?: (num: number) => void,
   ): Promise<Blob> => {
     const originAb = await blobToArrayBuffer(originBlob);
-    const result = await pmToPromise(
+    const result = await pmToPromiseWithProgress(
       this.worker,
       getConvertCommand(originAb, originType),
+      progressCallback,
     );
     const resultArrBuf = getIn(result, 'data.data.MEMFS.0.data', null);
     return audioBufferToBlob(resultArrBuf);

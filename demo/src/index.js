@@ -25,7 +25,8 @@ async function main() {
 
   // 裁剪第5至50秒
   const beginTime = Date.now();
-  const clippedBlob = await audioSculptor.splice(blob, 60 * 60, 60 * 70);
+  // const clippedBlob = await audioSculptor.splice(blob, 60 * 60, 60 * 70);
+  const clippedBlob = await audioSculptor.convert(blob, 'webm', 60 * 60 * 1000);
   const endTime = Date.now();
   const clippedAudio = await audioSculptor.toAudio(clippedBlob);
 

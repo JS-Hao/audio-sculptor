@@ -49,6 +49,67 @@ export function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
   });
 }
 
+export function pmToPromiseWithProgress(
+  worker: Worker,
+  postInfo?: PostInfo,
+  progressCallback?: (num: number) => void,
+): Promise<WorkerEvent> {
+  let duration: number;
+  let currentTime: number = 0;
+  const durationReg = /Duration: (.+), start/;
+  const currentTimeReg = /size=    (.+)kB time=(.+) bitrate/;
+
+  return new Promise((resolve, reject) => {
+    const successHandler = function(event: WorkerEvent) {
+      switch (event.data.type) {
+        case 'stdout':
+        case 'stderr':
+          const msg = get(event, 'data.data', '') as string;
+          if (durationReg.test(msg)) {
+            duration = timeToMillisecond(
+              msg.match(durationReg)[1] || '00:00:01',
+            );
+          } else if (currentTimeReg.test(msg)) {
+            currentTime = timeToMillisecond(
+              msg.match(currentTimeReg)[2] || '00:00:00',
+            );
+          }
+
+          const progress = currentTime / duration || 0;
+          progressCallback &&
+            progressCallback(progress >= 0.999 ? 0.999 : progress);
+          // console.log('worker stdout: ', event.data.data);
+          break;
+
+        case 'start':
+          console.log('worker receive your command and start to work:)');
+          break;
+
+        case 'done':
+          progressCallback && progressCallback(1);
+          worker.removeEventListener('message', successHandler);
+          resolve(event);
+          break;
+
+        case 'error':
+          worker.removeEventListener('message', successHandler);
+          reject(event.data.data);
+          break;
+
+        default:
+          break;
+      }
+    };
+    const failHandler = function(error: any) {
+      worker.removeEventListener('error', failHandler);
+      reject(error);
+    };
+    worker.addEventListener('message', successHandler);
+    worker.addEventListener('error', failHandler);
+    postInfo && worker.postMessage(postInfo);
+  });
+}
+
 export function pmToPromise(
   worker: Worker,
   postInfo?: PostInfo,
@@ -231,4 +292,14 @@ export function setMediaType(type: MediaType) {
 
 export function getMediaType(): MediaType {
   return mediaType;
+}
+
+// "00:30:00.47"
+function timeToMillisecond(time: string) {
+  const [hour, minute, second] = time.split(':').map(str => parseFloat(str));
+  let millisecond = 0;
+  millisecond += second * 1000;
+  millisecond += minute * 60 * 1000;
+  millisecond += hour * 60 * 60 * 1000;
+  return millisecond;
 }
