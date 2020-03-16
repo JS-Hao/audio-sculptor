@@ -1,4 +1,4 @@
-import { ISdk, SdkConfig, MediaType } from './types';
+import { ISdk, SdkConfig, MediaType, ProgressCallback } from './types';
 import {
   createWorker,
   createTimeoutPromise,
@@ -17,6 +17,7 @@ import {
   pmToPromiseWithProgress,
 } from './utils';
 import { isNumber, get as getIn } from 'lodash';
+import * as types from './types';
 
 export default class Sdk implements ISdk {
   private worker: Worker;
@@ -119,7 +120,7 @@ export default class Sdk implements ISdk {
     originBlob: Blob,
     targetType: MediaType,
     timeoutValue?: number,
-    progressCallback?: (num: number) => void,
+    progressCallback?: ProgressCallback,
   ): Promise<Blob> => {
     return Promise.race([
       this.innerConvert(originBlob, targetType, progressCallback),
@@ -130,7 +131,7 @@ export default class Sdk implements ISdk {
   innerConvert = async (
     originBlob: Blob,
     originType: MediaType,
-    progressCallback?: (num: number) => void,
+    progressCallback?: ProgressCallback,
   ): Promise<Blob> => {
     const originAb = await blobToArrayBuffer(originBlob);
     const result = await pmToPromiseWithProgress(
@@ -223,3 +224,5 @@ export default class Sdk implements ISdk {
     return blobToAudio(blob);
   }
 }
+
+export { types };

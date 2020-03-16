@@ -1,23 +1,8 @@
-import { PostInfo, WorkerEvent, MediaType } from './types';
+import { PostInfo, WorkerEvent, MediaType, ProgressCallback } from './types';
 import axios from 'axios';
 import { get } from 'lodash';
 
 export function createWorker(workerPath: string) {
-  // const blob = URL.createObjectURL(
-  //   new Blob(
-  //     [
-  //       'importScripts("' +
-  //         workerPath +
-  //         '");var now = Date.now;function print(text) {postMessage({"type" : "stdout","data" : text});};onmessage = function(event) {var message = event.data;if (message.type === "command") {var Module = {print: print,printErr: print,files: message.files || [],arguments: message.arguments || [],TOTAL_MEMORY: message.TOTAL_MEMORY || false};postMessage({"type" : "start","data" : Module.arguments.join(" ")});postMessage({"type" : "stdout","data" : "Received command: " +Module.arguments.join(" ") +((Module.TOTAL_MEMORY) ? ".  Processing with " + Module.TOTAL_MEMORY + " bits." : "")});var time = now();var result = ffmpeg_run(Module);var totalTime = now() - time;postMessage({"type" : "stdout","data" : "Finished processing (took " + totalTime + "ms)"});postMessage({"type" : "done","data" : result,"time" : totalTime});}};postMessage({"type" : "ready"});',
-  //     ],
-  //     {
-  //       type: 'application/javascript',
-  //     },
-  //   ),
-  // );
-
-  // const worker = new Worker(blob);
-  // URL.revokeObjectURL(blob);
   const worker = new Worker(workerPath);
   return worker;
 }
@@ -52,7 +37,7 @@ export function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
 export function pmToPromiseWithProgress(
   worker: Worker,
   postInfo?: PostInfo,
-  progressCallback?: (num: number) => void,
+  progressCallback?: ProgressCallback,
 ): Promise<WorkerEvent> {
   let duration: number;
   let currentTime: number = 0;
@@ -77,8 +62,11 @@ export function pmToPromiseWithProgress(
 
           const progress = currentTime / duration || 0;
           progressCallback &&
-            progressCallback(progress >= 0.999 ? 0.999 : progress);
-          // console.log('worker stdout: ', event.data.data);
+            progressCallback({
+              progress: progress >= 0.999 ? 0.999 : progress,
+              currentTime,
+              duration,
+            });
           break;
 
         case 'start':
@@ -86,7 +74,8 @@ export function pmToPromiseWithProgress(
           break;
 
         case 'done':
-          progressCallback && progressCallback(1);
+          progressCallback &&
+            progressCallback({ progress: 1, currentTime, duration });
           worker.removeEventListener('message', successHandler);
           resolve(event);
           break;

@@ -47,3 +47,7 @@ export interface PostInfo {
   arguments: string[];
   MEMFS: any[];
 }
+
+export interface ProgressCallback {
+  (params: { progress: number; duration: number; currentTime: number }): void;
+}
