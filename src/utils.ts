@@ -1,4 +1,10 @@
-import { PostInfo, WorkerEvent, MediaType, ProgressCallback } from './types';
+import {
+  PostInfo,
+  WorkerEvent,
+  MediaType,
+  ProgressCallback,
+  BlobMediaType,
+} from './types';
 import axios from 'axios';
 import { get } from 'lodash';
 
@@ -236,10 +242,11 @@ export async function getCombineCommand(audioBuffers: ArrayBuffer[]) {
 
 export function audioBufferToBlob(arrayBuffer: any) {
   const type = getMediaType();
-  const file = new File([arrayBuffer], `test.${type}`, {
-    type: `audio/${type}`,
-  });
-  return file;
+  const blob = new Blob([arrayBuffer], { type: toBlobMediaType(type) });
+  // const file = new File([arrayBuffer], `test.${type}`, {
+  //   type: `audio/${type}`,
+  // });
+  return blob;
 }
 
 export async function blobToAudio(blob: Blob): Promise<HTMLAudioElement> {
@@ -291,4 +298,8 @@ function timeToMillisecond(time: string) {
   millisecond += minute * 60 * 1000;
   millisecond += hour * 60 * 60 * 1000;
   return millisecond;
+}
+
+function toBlobMediaType(mediaType: MediaType): BlobMediaType {
+  return BlobMediaType[mediaType];
 }

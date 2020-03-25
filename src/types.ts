@@ -16,6 +16,11 @@ export enum MediaType {
   webm = 'webm',
 }
 
+export enum BlobMediaType {
+  mp3 = 'audio/mpeg',
+  webm = 'audio/webm',
+}
+
 export interface ISdk {
   open(conf: {
     workerPath: string;
