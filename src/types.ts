@@ -1,4 +1,4 @@
-export interface WorkerEvent {
+export interface IWorkerEvent {
   data: {
     type: string;
     data: {
@@ -7,7 +7,7 @@ export interface WorkerEvent {
   };
 }
 
-export interface SdkConfig {
+export interface ISdkConfig {
   timeout?: number;
 }
 
@@ -19,6 +19,18 @@ export enum MediaType {
 export enum BlobMediaType {
   mp3 = 'audio/mpeg',
   webm = 'audio/webm',
+}
+
+export interface ICustomConfig {
+  commandLine: string;
+  audios: {
+    [name: string]: Blob | HTMLAudioElement;
+  };
+}
+
+export interface IOutput {
+  blob: Blob;
+  logs: Array<Array<string>>;
 }
 
 export interface ISdk {
@@ -36,23 +48,29 @@ export interface ISdk {
     startSecond: number,
     endSecond: number,
     insertBlob?: Blob,
-  ): Promise<Blob>;
+  ): Promise<IOutput>;
 
-  transformSelf(originBlob: Blob): Promise<Blob>;
+  transformSelf(originBlob: Blob): Promise<IOutput>;
 
-  clip(originBlob: Blob, startSecond: number, endSecond: number): Promise<Blob>;
+  clip(
+    originBlob: Blob,
+    startSecond: number,
+    endSecond: number,
+  ): Promise<IOutput>;
 
   toBlob(audio: HTMLAudioElement): Promise<Blob>;
 
   toAudio(blob: Blob): Promise<HTMLAudioElement>;
+
+  custom(config: ICustomConfig): Promise<IOutput>;
 }
 
-export interface PostInfo {
+export interface IPostInfo {
   type: string;
   arguments: string[];
   MEMFS: any[];
 }
 
-export interface ProgressCallback {
+export interface IProgressCallback {
   (params: { progress: number; duration: number; currentTime: number }): void;
 }

@@ -1,4 +1,11 @@
-import { ISdk, SdkConfig, MediaType, ProgressCallback } from './types';
+import {
+  ISdk,
+  ISdkConfig,
+  IProgressCallback,
+  ICustomConfig,
+  IOutput,
+  MediaType,
+} from './types';
 import {
   createWorker,
   createTimeoutPromise,
@@ -16,8 +23,9 @@ import {
   getConvertCommand,
   pmToPromiseWithProgress,
   getClipConvertCommand,
+  isAudio,
 } from './utils';
-import { isNumber, get as getIn } from 'lodash';
+import { isNumber, get as getIn, flatten } from 'lodash';
 import * as types from './types';
 
 export default class Sdk implements ISdk {
@@ -25,7 +33,7 @@ export default class Sdk implements ISdk {
   private end: string = 'end';
   private timeoutNum: number;
 
-  constructor(conf?: SdkConfig) {
+  constructor(conf?: ISdkConfig) {
     conf = conf || {};
     this.timeoutNum = conf.timeout || 30 * 1000;
   }
@@ -55,9 +63,10 @@ export default class Sdk implements ISdk {
     startSecond: number,
     endSecond?: number,
     insertBlob?: Blob,
-  ): Promise<Blob> => {
+  ): Promise<IOutput> => {
     const ss = startSecond;
     const es = isNumber(endSecond) ? endSecond : this.end;
+    const logs: string[][] = [];
 
     insertBlob = insertBlob
       ? insertBlob
@@ -74,22 +83,35 @@ export default class Sdk implements ISdk {
       return null;
     } else if (ss === 0) {
       // 从头开始裁剪
-      rightSideArrBuf = (
-        await pmToPromise(this.worker, getClipCommand(originAb, es as number))
-      ).data.data.MEMFS[0].data;
+      const result = await pmToPromise(
+        this.worker,
+        getClipCommand(originAb, es as number),
+      );
+      rightSideArrBuf = result.buffer;
+      logs.push(result.logs);
     } else if (ss !== 0 && es === this.end) {
       // 裁剪至尾部
-      leftSideArrBuf = (
-        await pmToPromise(this.worker, getClipCommand(originAb, 0, ss))
-      ).data.data.MEMFS[0].data;
+      const result = await pmToPromise(
+        this.worker,
+        getClipCommand(originAb, 0, ss),
+      );
+      leftSideArrBuf = result.buffer;
+      logs.push(result.logs);
     } else {
       // 局部裁剪
-      leftSideArrBuf = (
-        await pmToPromise(this.worker, getClipCommand(originAb, 0, ss))
-      ).data.data.MEMFS[0].data;
-      rightSideArrBuf = (
-        await pmToPromise(this.worker, getClipCommand(originAb, es as number))
-      ).data.data.MEMFS[0].data;
+      const result1 = await pmToPromise(
+        this.worker,
+        getClipCommand(originAb, 0, ss),
+      );
+      leftSideArrBuf = result1.buffer;
+      logs.push(result1.logs);
+
+      const result2 = await pmToPromise(
+        this.worker,
+        getClipCommand(originAb, es as number),
+      );
+      rightSideArrBuf = result2.buffer;
+      logs.push(result2.logs);
     }
 
     const arrBufs = [];
@@ -102,7 +124,12 @@ export default class Sdk implements ISdk {
       await getCombineCommand(arrBufs),
     );
 
-    return audioBufferToBlob(combindResult.data.data.MEMFS[0].data);
+    logs.push(combindResult.logs);
+
+    return {
+      blob: audioBufferToBlob(combindResult.buffer),
+      logs,
+    };
   };
 
   splice = async (
@@ -110,10 +137,10 @@ export default class Sdk implements ISdk {
     startSecond: number,
     endSecond?: number,
     insertBlob?: Blob,
-  ): Promise<Blob> => {
+  ): Promise<IOutput> => {
     return Promise.race([
       this.innerSplice(originBlob, startSecond, endSecond, insertBlob),
-      timeout(this.timeoutNum) as any,
+      timeout(this.timeoutNum),
     ]);
   };
 
@@ -121,44 +148,50 @@ export default class Sdk implements ISdk {
     originBlob: Blob,
     targetType: MediaType,
     timeoutValue?: number,
-    progressCallback?: ProgressCallback,
-  ): Promise<Blob> => {
+    progressCallback?: IProgressCallback,
+  ): Promise<IOutput> => {
     return Promise.race([
       this.innerConvert(originBlob, targetType, progressCallback),
-      timeout(timeoutValue || this.timeoutNum) as any,
+      timeout(timeoutValue || this.timeoutNum),
     ]);
   };
 
   innerConvert = async (
     originBlob: Blob,
     originType: MediaType,
-    progressCallback?: ProgressCallback,
-  ): Promise<Blob> => {
+    progressCallback?: IProgressCallback,
+  ): Promise<IOutput> => {
     const originAb = await blobToArrayBuffer(originBlob);
     const result = await pmToPromiseWithProgress(
       this.worker,
       getConvertCommand(originAb, originType),
       progressCallback,
     );
-    const resultArrBuf = getIn(result, 'data.data.MEMFS.0.data', null);
-    return audioBufferToBlob(resultArrBuf);
+    const resultArrBuf = result.buffer;
+    return {
+      blob: audioBufferToBlob(resultArrBuf),
+      logs: [],
+    };
   };
 
-  innerTransformSelf = async (originBlob: Blob): Promise<Blob> => {
+  innerTransformSelf = async (originBlob: Blob): Promise<IOutput> => {
     const originAb = await blobToArrayBuffer(originBlob);
     const result = await pmToPromise(
       this.worker,
       getTransformSelfCommand(originAb),
     );
-    const resultArrBuf = getIn(result, 'data.data.MEMFS.0.data', null);
+    const resultArrBuf = result.buffer;
 
-    return audioBufferToBlob(resultArrBuf);
+    return {
+      blob: audioBufferToBlob(resultArrBuf),
+      logs: [result.logs],
+    };
   };
 
-  transformSelf = async (originBlob: Blob): Promise<Blob> => {
+  transformSelf = async (originBlob: Blob): Promise<IOutput> => {
     return Promise.race([
       this.innerTransformSelf(originBlob),
-      timeout(this.timeoutNum) as any,
+      timeout(this.timeoutNum),
     ]);
   };
 
@@ -166,10 +199,10 @@ export default class Sdk implements ISdk {
     originBlob: Blob,
     startSecond: number,
     endSecond?: number,
-  ): Promise<Blob> => {
+  ): Promise<IOutput> => {
     return Promise.race([
       this.innerClip(originBlob, startSecond, endSecond),
-      timeout(this.timeoutNum) as any,
+      timeout(this.timeoutNum),
     ]);
   };
 
@@ -177,29 +210,36 @@ export default class Sdk implements ISdk {
     originBlob: Blob,
     startSecond: number,
     endSecond?: number,
-  ): Promise<Blob> => {
+  ): Promise<IOutput> => {
     const ss = startSecond;
     const d = isNumber(endSecond) ? endSecond - startSecond : this.end;
     const originAb = await blobToArrayBuffer(originBlob);
+    const logs = [];
     let resultArrBuf: ArrayBuffer;
 
     if (d === this.end) {
-      resultArrBuf = (
-        await pmToPromise(this.worker, getClipCommand(originAb, ss))
-      ).data.data.MEMFS[0].data;
+      const result = await pmToPromise(
+        this.worker,
+        getClipCommand(originAb, ss),
+      );
+      resultArrBuf = result.buffer;
+      logs.push(result.logs);
     } else {
-      resultArrBuf = (
-        await pmToPromise(
-          this.worker,
-          getClipCommand(originAb, ss, d as number),
-        )
-      ).data.data.MEMFS[0].data;
+      const result = await pmToPromise(
+        this.worker,
+        getClipCommand(originAb, ss, d as number),
+      );
+      resultArrBuf = result.buffer;
+      logs.push(logs);
     }
 
-    return audioBufferToBlob(resultArrBuf);
+    return {
+      blob: audioBufferToBlob(resultArrBuf),
+      logs,
+    };
   };
 
-  private innerConcat = async (blobs: Blob[]) => {
+  private innerConcat = async (blobs: Blob[]): Promise<IOutput> => {
     const arrBufs: ArrayBuffer[] = [];
 
     for (let i = 0; i < blobs.length; i++) {
@@ -210,7 +250,13 @@ export default class Sdk implements ISdk {
       this.worker,
       await getCombineCommand(arrBufs),
     );
-    return audioBufferToBlob(result.data.data.MEMFS[0].data);
+
+    const concatBlob = audioBufferToBlob(result.buffer);
+    const convertResult = await this.convert(concatBlob, MediaType.mp3);
+    return {
+      blob: convertResult.blob,
+      logs: [result.logs, flatten(convertResult.logs)],
+    };
   };
 
   clipConvert = async (
@@ -218,10 +264,16 @@ export default class Sdk implements ISdk {
     originType: MediaType,
     startSecond: number,
     endSecond?: number,
-    progressCallback?: ProgressCallback,
-  ): Promise<Blob> => {
+    progressCallback?: IProgressCallback,
+  ): Promise<IOutput> => {
     return Promise.race([
-      this.innerClipConvert(arrayBuffer, originType, startSecond, endSecond, progressCallback),
+      this.innerClipConvert(
+        arrayBuffer,
+        originType,
+        startSecond,
+        endSecond,
+        progressCallback,
+      ),
       timeout(this.timeoutNum) as any,
     ]);
   };
@@ -231,18 +283,21 @@ export default class Sdk implements ISdk {
     originType: MediaType,
     startSecond: number,
     endSecond?: number,
-    progressCallback?: ProgressCallback,
-  ): Promise<Blob> => {
+    progressCallback?: IProgressCallback,
+  ): Promise<IOutput> => {
     const result = await pmToPromiseWithProgress(
       this.worker,
       getClipConvertCommand(arrayBuffer, originType, startSecond, endSecond),
       progressCallback,
     );
-    const resultArrBuf = getIn(result, 'data.data.MEMFS.0.data', null);
-    return audioBufferToBlob(resultArrBuf);
+    const resultArrBuf = result.buffer;
+    return {
+      blob: audioBufferToBlob(resultArrBuf),
+      logs: [],
+    };
   };
 
-  concat = async (blobs: Blob[]) => {
+  concat = async (blobs: Blob[]): Promise<IOutput> => {
     return Promise.race([this.innerConcat(blobs), timeout(this.timeoutNum)]);
   };
 
@@ -252,6 +307,43 @@ export default class Sdk implements ISdk {
 
   toAudio(blob: Blob): Promise<HTMLAudioElement> {
     return blobToAudio(blob);
+  }
+
+  custom(config: ICustomConfig): Promise<IOutput> {
+    return Promise.race([this.innerCustom(config), timeout(this.timeoutNum)]);
+  }
+
+  private async innerCustom(config: ICustomConfig): Promise<IOutput> {
+    const { commandLine, audios } = config;
+    const MEMFS = [];
+    const audioNames = Object.keys(audios);
+    for (let index = 0; index < audioNames.length; index++) {
+      const name = audioNames[index];
+      const audio = audios[name];
+      let blob: Blob;
+
+      if (isAudio(audio)) {
+        blob = await audioToBlob(audio as HTMLAudioElement);
+      } else {
+        blob = audio as Blob;
+      }
+
+      MEMFS.push({
+        name,
+        data: new Uint8Array(await blobToArrayBuffer(blob)),
+      });
+    }
+
+    const result = await pmToPromise(this.worker, {
+      type: 'run',
+      arguments: commandLine.split(' '),
+      MEMFS,
+    });
+
+    return {
+      blob: audioBufferToBlob(result.buffer),
+      logs: [result.logs],
+    };
   }
 }
 
