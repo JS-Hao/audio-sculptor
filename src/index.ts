@@ -15,6 +15,7 @@ import {
   getTransformSelfCommand,
   getConvertCommand,
   pmToPromiseWithProgress,
+  getClipConvertCommand,
 } from './utils';
 import { isNumber, get as getIn } from 'lodash';
 import * as types from './types';
@@ -210,6 +211,35 @@ export default class Sdk implements ISdk {
       await getCombineCommand(arrBufs),
     );
     return audioBufferToBlob(result.data.data.MEMFS[0].data);
+  };
+
+  clipConvert = async (
+    arrayBuffer: ArrayBuffer,
+    originType: MediaType,
+    startSecond: number,
+    endSecond?: number,
+    progressCallback?: ProgressCallback,
+  ): Promise<Blob> => {
+    return Promise.race([
+      this.innerClipConvert(arrayBuffer, originType, startSecond, endSecond, progressCallback),
+      timeout(this.timeoutNum) as any,
+    ]);
+  };
+
+  private innerClipConvert = async (
+    arrayBuffer: ArrayBuffer,
+    originType: MediaType,
+    startSecond: number,
+    endSecond?: number,
+    progressCallback?: ProgressCallback,
+  ): Promise<Blob> => {
+    const result = await pmToPromiseWithProgress(
+      this.worker,
+      getClipConvertCommand(arrayBuffer, originType, startSecond, endSecond),
+      progressCallback,
+    );
+    const resultArrBuf = getIn(result, 'data.data.MEMFS.0.data', null);
+    return audioBufferToBlob(resultArrBuf);
   };
 
   concat = async (blobs: Blob[]) => {
