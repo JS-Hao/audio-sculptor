@@ -220,6 +220,27 @@ export function getConvertCommand(
   };
 }
 
+export function getClipConvertCommand(
+  arrayBuffer: ArrayBuffer,
+  originType: MediaType,
+  st: number,
+  et?: number,
+) {
+  const type = getMediaType();
+  return {
+    type: 'run',
+    arguments: `-ss ${st} -i input.${originType} ${
+      et ? `-t ${et} ` : ''
+    }-y output.${type}`.split(' '),
+    MEMFS: [
+      {
+        data: new Uint8Array(arrayBuffer as any),
+        name: `input.${originType}`,
+      },
+    ],
+  };
+}
+
 export async function getCombineCommand(audioBuffers: ArrayBuffer[]) {
   const type = getMediaType();
   const files = audioBuffers.map((arrayBuffer, index) => ({
