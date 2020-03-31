@@ -25,17 +25,17 @@ import {
   getClipConvertCommand,
   isAudio,
 } from './utils';
-import { isNumber, get as getIn, flatten } from 'lodash';
+import { isNumber, flatten } from 'lodash';
 import * as types from './types';
 
 export default class Sdk implements ISdk {
   private worker: Worker;
   private end: string = 'end';
-  private timeoutNum: number;
+  private defaultTimeout: number;
 
   constructor(conf?: ISdkConfig) {
     conf = conf || {};
-    this.timeoutNum = conf.timeout || 30 * 1000;
+    this.defaultTimeout = conf.timeout || 30 * 1000;
   }
 
   open = (conf: {
@@ -140,7 +140,7 @@ export default class Sdk implements ISdk {
   ): Promise<IOutput> => {
     return Promise.race([
       this.innerSplice(originBlob, startSecond, endSecond, insertBlob),
-      timeout(this.timeoutNum),
+      timeout(this.defaultTimeout),
     ]);
   };
 
@@ -152,7 +152,7 @@ export default class Sdk implements ISdk {
   ): Promise<IOutput> => {
     return Promise.race([
       this.innerConvert(originBlob, targetType, progressCallback),
-      timeout(timeoutValue || this.timeoutNum),
+      timeout(timeoutValue || this.defaultTimeout),
     ]);
   };
 
@@ -170,7 +170,7 @@ export default class Sdk implements ISdk {
     const resultArrBuf = result.buffer;
     return {
       blob: audioBufferToBlob(resultArrBuf),
-      logs: [],
+      logs: [result.logs],
     };
   };
 
@@ -191,7 +191,7 @@ export default class Sdk implements ISdk {
   transformSelf = async (originBlob: Blob): Promise<IOutput> => {
     return Promise.race([
       this.innerTransformSelf(originBlob),
-      timeout(this.timeoutNum),
+      timeout(this.defaultTimeout),
     ]);
   };
 
@@ -202,7 +202,7 @@ export default class Sdk implements ISdk {
   ): Promise<IOutput> => {
     return Promise.race([
       this.innerClip(originBlob, startSecond, endSecond),
-      timeout(this.timeoutNum),
+      timeout(this.defaultTimeout),
     ]);
   };
 
@@ -252,10 +252,9 @@ export default class Sdk implements ISdk {
     );
 
     const concatBlob = audioBufferToBlob(result.buffer);
-    const convertResult = await this.convert(concatBlob, MediaType.mp3);
     return {
-      blob: convertResult.blob,
-      logs: [result.logs, flatten(convertResult.logs)],
+      blob: concatBlob,
+      logs: [result.logs],
     };
   };
 
@@ -274,7 +273,7 @@ export default class Sdk implements ISdk {
         endSecond,
         progressCallback,
       ),
-      timeout(this.timeoutNum) as any,
+      timeout(this.defaultTimeout) as any,
     ]);
   };
 
@@ -293,12 +292,15 @@ export default class Sdk implements ISdk {
     const resultArrBuf = result.buffer;
     return {
       blob: audioBufferToBlob(resultArrBuf),
-      logs: [],
+      logs: [result.logs],
     };
   };
 
   concat = async (blobs: Blob[]): Promise<IOutput> => {
-    return Promise.race([this.innerConcat(blobs), timeout(this.timeoutNum)]);
+    return Promise.race([
+      this.innerConcat(blobs),
+      timeout(this.defaultTimeout),
+    ]);
   };
 
   toBlob(audio: HTMLAudioElement): Promise<Blob> {
@@ -310,11 +312,15 @@ export default class Sdk implements ISdk {
   }
 
   custom(config: ICustomConfig): Promise<IOutput> {
-    return Promise.race([this.innerCustom(config), timeout(this.timeoutNum)]);
+    const { timeout: inputTimeout } = config;
+    return Promise.race([
+      this.innerCustom(config),
+      timeout(inputTimeout || this.defaultTimeout),
+    ]);
   }
 
   private async innerCustom(config: ICustomConfig): Promise<IOutput> {
-    const { commandLine, audios } = config;
+    const { commandLine, audios, processCallback } = config;
     const MEMFS = [];
     const audioNames = Object.keys(audios);
     for (let index = 0; index < audioNames.length; index++) {
@@ -334,11 +340,15 @@ export default class Sdk implements ISdk {
       });
     }
 
-    const result = await pmToPromise(this.worker, {
-      type: 'run',
-      arguments: commandLine.split(' '),
-      MEMFS,
-    });
+    const result = await pmToPromiseWithProgress(
+      this.worker,
+      {
+        type: 'run',
+        arguments: commandLine.split(' '),
+        MEMFS,
+      },
+      processCallback,
+    );
 
     return {
       blob: audioBufferToBlob(result.buffer),

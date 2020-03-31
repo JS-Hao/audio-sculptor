@@ -56,11 +56,11 @@ export function pmToPromiseWithProgress(
 
   return new Promise((resolve, reject) => {
     const successHandler = function(event: IWorkerEvent) {
-      result.logs.push(event.data.data.toString());
+      result.logs.push(get(event, 'data.data', '').toString());
 
       switch (event.data.type) {
         case 'stdout':
-        case 'stderr':
+          // case 'stderr':
           const msg = get(event, 'data.data', '') as string;
           if (durationReg.test(msg)) {
             duration = timeToMillisecond(
@@ -79,6 +79,7 @@ export function pmToPromiseWithProgress(
               currentTime,
               duration,
             });
+          console.log('worker stdout: ', event.data.data);
           break;
 
         case 'start':
@@ -125,11 +126,11 @@ export function pmToPromise(
 
   return new Promise((resolve, reject) => {
     const successHandler = function(event: IWorkerEvent) {
-      result.logs.push(event.data.data.toString());
+      result.logs.push(get(event, 'data.data', '').toString());
 
       switch (event.data.type) {
         case 'stdout':
-        case 'stderr':
+          // case 'stderr':
           console.log('worker stdout: ', event.data.data);
           break;
 
@@ -273,6 +274,7 @@ export async function getCombineCommand(audioBuffers: ArrayBuffer[]) {
     data: new Uint8Array(fileArrayBuffer),
     name: 'filelist.txt',
   });
+
   return {
     type: 'run',
     arguments: `-f concat -i filelist.txt -c copy output.${type}`.split(' '),

@@ -23,6 +23,8 @@ export enum BlobMediaType {
 
 export interface ICustomConfig {
   commandLine: string;
+  processCallback?: IProgressCallback;
+  timeout?: number;
   audios: {
     [name: string]: Blob | HTMLAudioElement;
   };
@@ -63,6 +65,14 @@ export interface ISdk {
   toAudio(blob: Blob): Promise<HTMLAudioElement>;
 
   custom(config: ICustomConfig): Promise<IOutput>;
+
+  clipConvert(
+    arrayBuffer: ArrayBuffer,
+    originType: MediaType,
+    startSecond: number,
+    endSecond?: number,
+    progressCallback?: IProgressCallback,
+  ): Promise<IOutput>;
 }
 
 export interface IPostInfo {
