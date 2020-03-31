@@ -60,7 +60,7 @@ export function pmToPromiseWithProgress(
 
       switch (event.data.type) {
         case 'stdout':
-          // case 'stderr':
+        case 'stderr':
           const msg = get(event, 'data.data', '') as string;
           if (durationReg.test(msg)) {
             duration = timeToMillisecond(
