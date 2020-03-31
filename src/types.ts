@@ -23,7 +23,7 @@ export enum BlobMediaType {
 
 export interface ICustomConfig {
   commandLine: string;
-  processCallback?: IProgressCallback;
+  progressCallback?: IProgressCallback;
   timeout?: number;
   audios: {
     [name: string]: Blob | HTMLAudioElement;

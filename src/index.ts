@@ -320,7 +320,7 @@ export default class Sdk implements ISdk {
   }
 
   private async innerCustom(config: ICustomConfig): Promise<IOutput> {
-    const { commandLine, audios, processCallback } = config;
+    const { commandLine, audios, progressCallback } = config;
     const MEMFS = [];
     const audioNames = Object.keys(audios);
     for (let index = 0; index < audioNames.length; index++) {
@@ -347,7 +347,7 @@ export default class Sdk implements ISdk {
         arguments: commandLine.split(' '),
         MEMFS,
       },
-      processCallback,
+      progressCallback,
     );
 
     return {
