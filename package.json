@@ -1,6 +1,6 @@
 {
   "name": "audio-sculptor",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "you can edit audio(such as clip, splice and replace) in browsers😊",
   "main": "dist/index.js",
   "scripts": {
