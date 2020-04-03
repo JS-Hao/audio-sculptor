@@ -48,7 +48,7 @@ export function pmToPromiseWithProgress(
   let duration: number;
   let currentTime: number = 0;
   const durationReg = /Duration: (.+), start/;
-  const currentTimeReg = /size=    (.+)kB time=(.+) bitrate/;
+  const currentTimeReg = /time=(.+) bitrate/;
   const result: { buffer: ArrayBuffer; logs: string[] } = {
     buffer: null,
     logs: [],
@@ -68,11 +68,12 @@ export function pmToPromiseWithProgress(
             );
           } else if (currentTimeReg.test(msg)) {
             currentTime = timeToMillisecond(
-              msg.match(currentTimeReg)[2] || '00:00:00',
+              msg.match(currentTimeReg)[1] || '00:00:00',
             );
           }
 
           const progress = currentTime / duration || 0;
+
           progressCallback &&
             progressCallback({
               progress: progress >= 0.999 ? 0.999 : progress,
