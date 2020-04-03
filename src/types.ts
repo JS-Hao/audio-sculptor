@@ -26,7 +26,7 @@ export interface ICustomConfig {
   progressCallback?: IProgressCallback;
   timeout?: number;
   audios: {
-    [name: string]: Blob | HTMLAudioElement;
+    [name: string]: ArrayBuffer | Blob | HTMLAudioElement;
   };
 }
 
