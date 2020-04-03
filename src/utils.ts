@@ -1,12 +1,12 @@
 import {
-  PostInfo,
-  WorkerEvent,
+  IPostInfo,
+  IWorkerEvent,
   MediaType,
-  ProgressCallback,
+  IProgressCallback,
   BlobMediaType,
 } from './types';
 import axios from 'axios';
-import { get } from 'lodash';
+import { get, isFunction } from 'lodash';
 
 export function createWorker(workerPath: string) {
   const worker = new Worker(workerPath);
@@ -42,16 +42,22 @@ export function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
 
 export function pmToPromiseWithProgress(
   worker: Worker,
-  postInfo?: PostInfo,
-  progressCallback?: ProgressCallback,
-): Promise<WorkerEvent> {
+  postInfo?: IPostInfo,
+  progressCallback?: IProgressCallback,
+): Promise<{ buffer: ArrayBuffer; logs: string[] }> {
   let duration: number;
   let currentTime: number = 0;
   const durationReg = /Duration: (.+), start/;
   const currentTimeReg = /size=    (.+)kB time=(.+) bitrate/;
+  const result: { buffer: ArrayBuffer; logs: string[] } = {
+    buffer: null,
+    logs: [],
+  };
 
   return new Promise((resolve, reject) => {
-    const successHandler = function(event: WorkerEvent) {
+    const successHandler = function(event: IWorkerEvent) {
+      result.logs.push(get(event, 'data.data', '').toString());
+
       switch (event.data.type) {
         case 'stdout':
         case 'stderr':
@@ -73,6 +79,7 @@ export function pmToPromiseWithProgress(
               currentTime,
               duration,
             });
+          console.log('worker stdout: ', event.data.data);
           break;
 
         case 'start':
@@ -83,7 +90,8 @@ export function pmToPromiseWithProgress(
           progressCallback &&
             progressCallback({ progress: 1, currentTime, duration });
           worker.removeEventListener('message', successHandler);
-          resolve(event);
+          result.buffer = get(event, 'data.data.MEMFS.0.data', null);
+          resolve(result);
           break;
 
         case 'error':
@@ -95,10 +103,12 @@ export function pmToPromiseWithProgress(
           break;
       }
     };
+
     const failHandler = function(error: any) {
       worker.removeEventListener('error', failHandler);
       reject(error);
     };
+
     worker.addEventListener('message', successHandler);
     worker.addEventListener('error', failHandler);
     postInfo && worker.postMessage(postInfo);
@@ -107,12 +117,20 @@ export function pmToPromiseWithProgress(
 
 export function pmToPromise(
   worker: Worker,
-  postInfo?: PostInfo,
-): Promise<WorkerEvent> {
+  postInfo?: IPostInfo,
+): Promise<{ buffer: ArrayBuffer; logs: string[] }> {
+  const result = {
+    buffer: null,
+    logs: [],
+  };
+
   return new Promise((resolve, reject) => {
-    const successHandler = function(event: WorkerEvent) {
+    const successHandler = function(event: IWorkerEvent) {
+      result.logs.push(get(event, 'data.data', '').toString());
+
       switch (event.data.type) {
         case 'stdout':
+          // case 'stderr':
           console.log('worker stdout: ', event.data.data);
           break;
 
@@ -122,7 +140,8 @@ export function pmToPromise(
 
         case 'done':
           worker.removeEventListener('message', successHandler);
-          resolve(event);
+          result.buffer = get(event, 'data.data.MEMFS.0.data', null);
+          resolve(result);
           break;
 
         case 'error':
@@ -134,6 +153,7 @@ export function pmToPromise(
           break;
       }
     };
+
     const failHandler = function(error: any) {
       worker.removeEventListener('error', failHandler);
       reject(error);
@@ -150,7 +170,7 @@ export function waitForWorkerIsReady(
   onFail?: Function,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const handleReady = function(event: WorkerEvent) {
+    const handleReady = function(event: IWorkerEvent) {
       if (event.data.type === 'ready') {
         worker.removeEventListener('message', handleReady);
         onSuccess && onSuccess();
@@ -254,6 +274,7 @@ export async function getCombineCommand(audioBuffers: ArrayBuffer[]) {
     data: new Uint8Array(fileArrayBuffer),
     name: 'filelist.txt',
   });
+
   return {
     type: 'run',
     arguments: `-f concat -i filelist.txt -c copy output.${type}`.split(' '),
@@ -264,9 +285,6 @@ export async function getCombineCommand(audioBuffers: ArrayBuffer[]) {
 export function audioBufferToBlob(arrayBuffer: any) {
   const type = getMediaType();
   const blob = new Blob([arrayBuffer], { type: toBlobMediaType(type) });
-  // const file = new File([arrayBuffer], `test.${type}`, {
-  //   type: `audio/${type}`,
-  // });
   return blob;
 }
 
@@ -296,10 +314,23 @@ export async function audioToBlob(audio: HTMLAudioElement): Promise<Blob> {
   }
 }
 
-export function timeout(time: number): Promise<void> {
+export function timeout(time: number): Promise<any> {
   return new Promise((resolve, reject) => {
     setTimeout(() => reject(new Error('timeout in audioSculptor!')), time);
   });
+}
+
+/**
+ * 判断是否为一个audio对象
+ * @param audio
+ */
+export function isAudio(audio: any): boolean {
+  return (
+    audio &&
+    isFunction(audio.play) &&
+    isFunction(audio.pause) &&
+    isFunction(audio.canPlayType)
+  );
 }
 
 let mediaType: MediaType;
