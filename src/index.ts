@@ -17,6 +17,7 @@ import {
   audioBufferToBlob,
   blobToAudio,
   audioToBlob,
+  audioToArrayBuffer,
   timeout,
   setMediaType,
   getTransformSelfCommand,
@@ -326,17 +327,19 @@ export default class Sdk implements ISdk {
     for (let index = 0; index < audioNames.length; index++) {
       const name = audioNames[index];
       const audio = audios[name];
-      let blob: Blob;
+      let arrayBuffer: ArrayBuffer;
 
       if (isAudio(audio)) {
-        blob = await audioToBlob(audio as HTMLAudioElement);
+        arrayBuffer = await audioToArrayBuffer(audio as HTMLAudioElement);
+      } else if (audio instanceof Blob) {
+        arrayBuffer = await blobToArrayBuffer(audio);
       } else {
-        blob = audio as Blob;
+        arrayBuffer = audio as ArrayBuffer;
       }
 
       MEMFS.push({
         name,
-        data: new Uint8Array(await blobToArrayBuffer(blob)),
+        data: new Uint8Array(arrayBuffer),
       });
     }
 

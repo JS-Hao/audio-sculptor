@@ -315,6 +315,22 @@ export async function audioToBlob(audio: HTMLAudioElement): Promise<Blob> {
   }
 }
 
+export async function audioToArrayBuffer(audio: HTMLAudioElement): Promise<ArrayBuffer> {
+  const url = audio.src;
+  if (url) {
+    return axios({
+      url,
+      method: 'get',
+      responseType: 'arraybuffer',
+    }).then(async res => {
+      const arrayBuffer = res.data;
+      return arrayBuffer;
+    });
+  } else {
+    return Promise.resolve(null);
+  }
+}
+
 export function timeout(time: number): Promise<any> {
   return new Promise((resolve, reject) => {
     setTimeout(() => reject(new Error('timeout in audioSculptor!')), time);
