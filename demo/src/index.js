@@ -17,7 +17,7 @@ async function main() {
   const blob = await audioSculptor.toBlob(audio);
 
   // 裁剪第5至10秒
-  const clippedBlob = await audioSculptor.clip(blob, 5, 10);
+  const { blob: clippedBlob } = await audioSculptor.clip(blob, 5, 10);
   const clippedAudio = await audioSculptor.toAudio(clippedBlob);
 
   const span = document.querySelector('.span');
