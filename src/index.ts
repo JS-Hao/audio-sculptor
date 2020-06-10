@@ -81,7 +81,7 @@ export default class Sdk implements ISdk {
 
     if (ss === 0 && es === this.end) {
       // 裁剪全部
-      return null;
+      return { blob: insertBlob, logs: [] } || null;
     } else if (ss === 0) {
       // 从头开始裁剪
       const result = await pmToPromise(
