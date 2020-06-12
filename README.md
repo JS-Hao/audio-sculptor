@@ -168,7 +168,7 @@ const { blob: concatBlob } = await audioSculptor.concat(blobs);
 
 - returns <`Promise<Output>`>
 
-由于 `ffmpeg` 包含的音频处理操作类型繁多，为了在使用层面提高 `audio-sculptor` 的拓展性，提高了 `custom` 方法，用于自定义音频处理，`audio-sculptor` 将根据给定的 `commandLine` 执行开发者预期的操作，如下所示，可借助 `custom` 实现音频从 `webm` 转 `mp3` 的转码操作：
+由于 `ffmpeg` 包含的音频处理操作类型繁多，为了在使用层面提高 `audio-sculptor` 的拓展性，提供了 `custom` 方法，用于自定义音频处理，`audio-sculptor` 将根据给定的 `commandLine` 执行开发者预期的操作，如下所示，可借助 `custom` 实现音频从 `webm` 转 `mp3` 的转码操作：
 
 ```typescript
 const { blob } = audioSculptor.custom({
