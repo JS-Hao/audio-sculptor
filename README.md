@@ -30,4 +30,6 @@ yarn add audio-sculptor
 
 ## 项目计划
 
-- V1.6 提升计算性能，ffmpeg wasm 化
+- V1.6.1 增加单元测试
+- V1.6.2 增加部分接口的性能测试
+- V1.6.2 提升计算性能，ffmpeg wasm 化
