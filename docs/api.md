@@ -19,6 +19,12 @@ Functions:
 - [audioSculptor.concat()](#audiosculptorconcat)
 - [audioSculptor.custom()](#audiosculptorcustom)
 
+## run前必看
+
+由于音频处理是CPU密集型计算，audio-sculptor 将把这部分工作单独移到 worker 中进行，**目录`./ffmpeg`下存放的是针对不同音频格式的 worker 文件**
+* `ffmpeg-worker-mp4.js` 针对 .mp3 文件格式的音频处理
+* `ffmpeg-worker-webm.js` 针对 .webm 文件格式的音频处理
+
 ## Initial
 
 ### new AudioSculptor()
@@ -72,8 +78,8 @@ function open(conf: Config): Promise<any>;
 
 | Field      | Type      | necessity | Description                                                                                                                                                                                                                                                                                                                               |
 | ---------- | --------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| workerPath | string    | 是        | ffmpeg-worker 资源的路径地址，由于 audio-sculptor 是需要 worker 参与工作的，受限于 worker 的同源策略问题，开发者需要将`ffmpeg/ffmpeg-worker-mp4.js`资源单独部署到自己的项目中，保证 worker 资源路径与项目的同源，注意：`ffmpeg-worker-mp4.js`是引用了[https://github.com/Kagami/ffmpeg.js](https://github.com/Kagami/ffmpeg.js)的资源文件 |
-| mediaType  | MediaType | 是        | 默认的音频输出格式，可枚举值                                                                                                                                                                                                                                                                                                              |
+| workerPath | string    | 是        | ffmpeg-worker 资源的路径地址，由于 audio-sculptor 是需要 worker 参与工作的，受限于 worker 的同源策略问题，开发者需要将`ffmpeg/ffmpeg-worker-mp4.js`或`ffmpeg/ffmpeg-worker-webm.js`资源单独部署到自己的项目中，保证 worker 资源路径与项目的同源，注意：`ffmpeg-worker-mp4.js`和`ffmpeg-worker-webm.js`是引用了[https://github.com/Kagami/ffmpeg.js](https://github.com/Kagami/ffmpeg.js)的资源文件 如何选择合适的 worker 请看[run前必看](#run前必看) |
+| mediaType  | MediaType | 是        | 默认的音频输出格式，可枚举值                                                                                                                                                                                                                                                                                                            |
 | onSuccess  | Function  | 否        | 开启成功回调                                                                                                                                                                                                                                                                                                                              |
 | onFail     | Function  | 否        | 开启失败回调                                                                                                                                                                                                                                                                                                                              |
 
