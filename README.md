@@ -12,173 +12,22 @@
 
 ## 安装
 
+npm
+
 ```
 npm install audio-sculptor
 ```
 
-## 用法
+yarn
 
-可通过以下代码初始化 `audio-sculptor` :
-
-```javascript
-import AudioSculptor from 'audio-sculptor';
-const audioSculptor = new AudioSculptor();
+```
+yarn add audio-sculptor
 ```
 
-### new AudioSculptor([options])
+## API 文档
 
-- options
-  - `timeout` <`number`> 音频处理的超时时间，默认为 30s
+详情可戳 [api.md](https://github.com/JS-Hao/audio-sculptor/blob/master/docs/api.md)
 
-初始化 `audio-sculptor` ，通过传入 `options` 配置项，可配置一些基本内容
+## 项目计划
 
-```javascript
-const audioSculptor = new AudioSculptor({
-  timeout: 20 * 1000, // 将超时设置为20s
-});
-```
-
-`audio-sculptor` 所操作的对象都是 `Blob` 而不是 `Audio` ，因此提供了以下静态方法进行相互转换:
-
-### audioSculptor.toBlob(audio)
-
-- `audio` <`HTMLAudioElement`>
-- returns <`Promise<Blob>`>
-
-将 audio 转换成 blob
-
-```javascript
-const audio = new Audio(yourSrc);
-audioSculptor.toBlob(audio).then((blob) => {
-  console.log('the audio transforms to blob: ', blob);
-});
-```
-
-### audioSculptor.toAudio(blob)
-
-- `blob` <`Blob`>
-- returns <`Promise<HTMLAudioElement>`>
-
-```javascript
-audioSculptor.toAudio(blob).then((audio) => {
-  console.log('the blob transforms to audio: ', audio);
-});
-```
-
-将 blob 转成 audio
-
-### audioSculptor.open(workerPath, [onSuccess], [onFail])
-
-- `workerPath` <`string`>
-
-  ffmpeg-worker 资源的路径地址，由于`audio-sculptor`是需要 worker 参与工作的，受限于 worker 的同源策略问题，开发者需要将`ffmpeg/ffmpeg-worker-mp4.js`资源单独部署到自己的项目中，保证 worker 资源路径与项目的同源，注意：`ffmpeg-worker-mp4.js`是引用了[https://github.com/Kagami/ffmpeg.js](https://github.com/Kagami/ffmpeg.js)的资源文件
-
-- `onSuccess` <`Function`> 开启成功的回调函数
-- `onFail` <`Function`> 开启失败的回调函数
-- returns <`Promise<void>`>
-
-正式启动 `audio-sculptor`，由于启动是异步的，需要通过回调函数或 `Promise` 控制后续的操作
-
-```javascript
-const workerPath = 'http://localhost:9000/static/ffmpeg-worker-mp4.js';
-
-const p1 = audioSculptor.open(workerPath);
-
-p1.then(() => {
-  console.log('open success!');
-});
-```
-
-### audioSculptor.close()
-
-关闭`audio-sculptor`，释放内存占用
-
-### audioSculptor.splice(originBlob, ss, [es], [insertBlob])
-
-- `originBlob` < `Blob`> 将被删减的原始音频
-- `ss` <`number`> 指定被删区间的起始时间（单位：秒）
-- `es` <`number`> 指定被删区间的结束时间（单位：秒），若不传，则默认删除到末尾
-- `insertBlob` <`Blob`> 被替换的音频，若不传，则原始音频仅做删减处理
-- returns < `Pormise<{blob: Blob, logs: string[][]}>`> 处理后的输出音频及信息
-
-删减音频中间部分的内容，同时替换成给定的音频
-
-```javascript
-// 将音频audio1进行处理：将第3s至第7s的内容，替换成音频audio2
-const audio1 = new Audio(yourSrc1);
-const audio2 = new Audio(yourSrc2);
-
-const blob1 = await audioSculptor.toBlob(audio1);
-const blob2 = await audioSculptor.toBlob(audio2);
-
-const { blob: blob3, logs } = await audioSculptor.splice(blob1, 3, 7, blob2);
-const audio3 = await audioSculptor.toAudio(blob3);
-console.log(logs);
-// the infomation about how worker work during the audio processing
-```
-
-_注意：在接下来的有关音频操作的方法，其返回值均为 <`Pormise<{blob: Blob, logs: string[][]}`> ，其中 `blob` 为处理后的音频，`logs` 为处理过程中 worker 的输出信息，为方便简述，以下均由 `Promise<Output>` 替代_
-
-### audioSculptor.clip(originBlob, ss, [es])
-
-- `originBlob` <`Blob`> 将被截取的原始音频
-- `ss` <`number`> 指定被截取区间的起始时间（单位：秒）
-- `es` <`number`> 指定被截取区间的结束时间（单位：秒），若不传，则默认截取到末尾
-- returns <`Promise<Output>`> 处理后的输出音频及信息
-
-截取音频中间部分的内容
-
-```javascript
-// 提取音频audio的第3s至第7s
-const audio = new Audio(yourSrc);
-const blob = await audioSculptor.toBlob(audio);
-const { blob: clippedBlob } = await audioSculptor.clip(blob, 3, 7);
-const clippedAudio = await audioSculptor.toAudio(clippedBlob);
-```
-
-### audioSculptor.concat(blobs)
-
-- `blobs` <`Array<Blob>`> 将被拼接的音频数组
-- returns <`Promise<Output>`> 拼接后的音频及信息
-
-将多个音频首尾拼接成一个音频
-
-```javascript
-const { blob: concatBlob } = await audioSculptor.concat(blobs);
-```
-
-### audioSculptor.custom(config)
-
-- `config`
-
-  ```typescript
-  interface Config {
-    commandLine: string; // ffmpeg 语法执行命令
-    audios: {
-      [name: string]: ArrayBuffer | Blob | HTMLAudioElement;
-    }; // 需被处理的音频
-    progressCallback?(params: {
-      progress: number;
-      duration: number;
-      currentTime: number;
-    }): void; // 音频处理实时进度回调函数
-    timeout?: number; // 超时时间
-  }
-  ```
-
-- returns <`Promise<Output>`>
-
-由于 `ffmpeg` 包含的音频处理操作类型繁多，为了在使用层面提高 `audio-sculptor` 的拓展性，提供了 `custom` 方法，用于自定义音频处理，`audio-sculptor` 将根据给定的 `commandLine` 执行开发者预期的操作，如下所示，可借助 `custom` 实现音频从 `webm` 转 `mp3` 的转码操作：
-
-```typescript
-const { blob } = audioSculptor.custom({
-  audios: {
-    'input.webm': yourBlob,
-  },
-  timeout: 60 * 60 * 1000,
-  commandLine: `-i input.webm -ar 16000 output.mp3`,
-  progressCallback: (params) =>
-    console.log('current progress', params.progress),
-});
-```
-
+- V1.6 提升计算性能，ffmpeg wasm 化
