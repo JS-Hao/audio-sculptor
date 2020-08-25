@@ -6,18 +6,18 @@
 
 Initial:
 
-- [new AudioSculptor()](<#newAudioSculptor()>)
+- [new AudioSculptor()](#new-audiosculptor)
 
 Functions:
 
-- [audioSculptor.toBlob()](<#audioSculptor.toBlob()>)
-- [audioSculptor.toAudio()](<#audioSculptor.toAudio()>)
-- [audioSculptor.open()](<#audioSculptor.open()>)
-- [audioSculptor.close()](<#audioSculptor.close()>)
-- [audioSculptor.splice()](<#audioSculptor.splice()>)
-- [audioSculptor.clip()](<#audioSculptor.clip()>)
-- [audioSculptor.concat()](<#audioSculptor.concat()>)
-- [audioSculptor.custom()](<#audioSculptor.custom()>)
+- [audioSculptor.toBlob()](#audiosculptortoblob)
+- [audioSculptor.toAudio()](#audiosculptortoaudo>)
+- [audioSculptor.open()](#audiosculptoropen)
+- [audioSculptor.close()](#audiosculptorclose)
+- [audioSculptor.splice()](#audiosculptorsplice)
+- [audioSculptor.clip()](#audiosculptorclip)
+- [audioSculptor.concat()](#audiosculptorconcat)
+- [audioSculptor.custom()](#audiosculptorcustom)
 
 ## Initial
 
