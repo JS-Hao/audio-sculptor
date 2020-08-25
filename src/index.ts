@@ -26,7 +26,7 @@ import {
   getClipConvertCommand,
   isAudio,
 } from './utils';
-import { isNumber, flatten } from 'lodash';
+import { isNumber } from 'lodash';
 import * as types from './types';
 
 export default class Sdk implements ISdk {

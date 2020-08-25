@@ -48,7 +48,7 @@ export interface ISdk {
   splice(
     originBlob: Blob,
     startSecond: number,
-    endSecond: number,
+    endSecond?: number,
     insertBlob?: Blob,
   ): Promise<IOutput>;
 
@@ -57,8 +57,10 @@ export interface ISdk {
   clip(
     originBlob: Blob,
     startSecond: number,
-    endSecond: number,
+    endSecond?: number,
   ): Promise<IOutput>;
+
+  concat(blob: Blob[]): Promise<IOutput>;
 
   toBlob(audio: HTMLAudioElement): Promise<Blob>;
 
