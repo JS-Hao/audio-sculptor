@@ -11,7 +11,7 @@ Initial:
 Functions:
 
 - [audioSculptor.toBlob()](#audiosculptortoblob)
-- [audioSculptor.toAudio()](#audiosculptortoaudo)
+- [audioSculptor.toAudio()](#audiosculptortoaudio)
 - [audioSculptor.open()](#audiosculptoropen)
 - [audioSculptor.close()](#audiosculptorclose)
 - [audioSculptor.splice()](#audiosculptorsplice)
